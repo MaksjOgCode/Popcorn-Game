@@ -3,6 +3,12 @@
 
 #define MAX_LOADSTRING 100
 
+#define GRAPHIC_GLOBAL_SCALE     3
+#define GRAPHIC_LEVEL_X_OFFSET   8
+#define GRAPHIC_LEVEL_Y_OFFSET   6
+#define GRAPHIC_BRICK_WIDTH      15
+#define GRAPHIC_BRICK_HEIGHT     7
+
 HINSTANCE hInst;      
 WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
@@ -89,6 +95,20 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 //---------------------------------------------------------------------------------------------------
+void DrawBrick(HDC hdc, COLORREF RGB, int x_offset, int y_offset) {
+   HBRUSH brush = CreateSolidBrush(RGB);
+   SelectObject(hdc, brush);
+   Rectangle(hdc, x_offset * GRAPHIC_GLOBAL_SCALE,
+                  y_offset * GRAPHIC_GLOBAL_SCALE,
+                  (x_offset + GRAPHIC_BRICK_WIDTH) * GRAPHIC_GLOBAL_SCALE, 
+                  (y_offset + GRAPHIC_BRICK_HEIGHT) * GRAPHIC_GLOBAL_SCALE);
+}
+//---------------------------------------------------------------------------------------------------
+void DrawFrame(HDC hdc) {
+      for (int i = 0; i < 15; ++i)
+         DrawBrick(hdc, RGB(255, 255, 255), GRAPHIC_LEVEL_X_OFFSET + i * (GRAPHIC_BRICK_WIDTH + 1), GRAPHIC_LEVEL_Y_OFFSET);
+}
+//---------------------------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
    switch (message)
@@ -114,6 +134,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    case WM_PAINT: {
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hWnd, &ps);
+
+      DrawFrame(hdc);
+
       EndPaint(hWnd, &ps);
    } break;
 
