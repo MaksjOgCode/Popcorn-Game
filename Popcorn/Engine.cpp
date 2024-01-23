@@ -55,7 +55,7 @@ void DrawBrick(HDC hdc, EBrickType color_brick, int x_offset, int y_offset)
       SelectObject(hdc, Brick_Brush_Blue);
    } break;
 
-   default:
+   default: 
       return;
    }
 
