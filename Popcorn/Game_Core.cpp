@@ -1,13 +1,8 @@
 #include "framework.h"
 #include "Game_Core.hpp"
+#include "Engine.hpp"
 
 #define MAX_LOADSTRING 100
-
-#define GRAPHIC_GLOBAL_SCALE     3
-#define GRAPHIC_LEVEL_X_OFFSET   8
-#define GRAPHIC_LEVEL_Y_OFFSET   6
-#define GRAPHIC_BRICK_WIDTH      15
-#define GRAPHIC_BRICK_HEIGHT     7
 
 HINSTANCE hInst;      
 WCHAR szTitle[MAX_LOADSTRING];
@@ -60,7 +55,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
    wcex.hInstance      = hInstance;
    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_POPCORN));
    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-   wcex.hbrBackground  = CreateSolidBrush(RGB(0, 0, 0));
+   wcex.hbrBackground  = CreateSolidBrush(RGB(10, 28, 52));    // Name Color: Cobalt;
    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_POPCORN);
    wcex.lpszClassName  = szWindowClass;
    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -71,6 +66,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance;
+
+   Init();
 
    RECT window_rect;
    window_rect.left    = 0;
@@ -93,20 +90,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
    return TRUE;
-}
-//---------------------------------------------------------------------------------------------------
-void DrawBrick(HDC hdc, COLORREF RGB, int x_offset, int y_offset) {
-   HBRUSH brush = CreateSolidBrush(RGB);
-   SelectObject(hdc, brush);
-   Rectangle(hdc, x_offset * GRAPHIC_GLOBAL_SCALE,
-                  y_offset * GRAPHIC_GLOBAL_SCALE,
-                  (x_offset + GRAPHIC_BRICK_WIDTH) * GRAPHIC_GLOBAL_SCALE, 
-                  (y_offset + GRAPHIC_BRICK_HEIGHT) * GRAPHIC_GLOBAL_SCALE);
-}
-//---------------------------------------------------------------------------------------------------
-void DrawFrame(HDC hdc) {
-      for (int i = 0; i < 15; ++i)
-         DrawBrick(hdc, RGB(255, 255, 255), GRAPHIC_LEVEL_X_OFFSET + i * (GRAPHIC_BRICK_WIDTH + 1), GRAPHIC_LEVEL_Y_OFFSET);
 }
 //---------------------------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
