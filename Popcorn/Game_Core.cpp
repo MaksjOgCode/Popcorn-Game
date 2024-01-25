@@ -1,6 +1,4 @@
-#include "framework.h"
 #include "Game_Core.hpp"
-#include "Engine.hpp"
 
 #define MAX_LOADSTRING 100
 
