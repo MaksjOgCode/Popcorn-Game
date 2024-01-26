@@ -1,12 +1,17 @@
 #include "Engine.hpp"
 
 HBRUSH Brush_PaleBlue,  Brush_Blue, Brush_WoodyBlue;
-HPEN   Brick_Pen_White_Outline, Platform_Pen_White_Outline;
+HPEN   Brick_Pen_White_Outline, Platform_Pen_White_Outline, Letter_Pen_Black;
 
 enum EBrickType {
-   Pale_Blue   = 101,   /* RGB - (193, 217, 249); */
-   Blue        = 102,   /* RGB - (90, 137, 185);  */
-   Woody_Blue  = 103    /* RGB - (46, 69, 83);    */
+   Pale_Blue   = 101,   /* RGB - (193, 217, 249);  */
+   Blue        = 102,   /* RGB - (90, 137, 185);   */
+   Woody_Blue  = 103    /* RGB - (46, 69, 83);     */
+};
+
+enum ELetterType {
+   ELT_NONE    = 900,   /* The absence of a letter */
+   ELT_O       = 901    /* Letter "O"              */
 };
 
 char Level_01[14][12] =
@@ -37,6 +42,7 @@ void Init()
 
    Brick_Pen_White_Outline    = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
    Platform_Pen_White_Outline = CreatePen(PS_SOLID, 3, RGB(255, 255, 255));
+   Letter_Pen_Black           = CreatePen(PS_SOLID, 4, RGB(10, 28, 52));
 }
 //---------------------------------------------------------------------------------------------------
 void DrawBrick(HDC hdc, EBrickType color_brick, int x_offset, int y_offset)
@@ -67,20 +73,89 @@ void DrawBrick(HDC hdc, EBrickType color_brick, int x_offset, int y_offset)
                2 * GRAPHIC_GLOBAL_SCALE, 2 * GRAPHIC_GLOBAL_SCALE );
 }
 //---------------------------------------------------------------------------------------------------
-void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, int rotation_step)
+void SetBrickLetterColor(bool is_front_side, EBrickType brick_type, HBRUSH &front_brush, HBRUSH &back_brush)
+{  /* The function responsible for correctly displaying the color of the side of the brick during animation */
+
+   if (is_front_side) {
+      switch (brick_type)
+      {
+      case Pale_Blue: {
+         front_brush = Brush_WoodyBlue;
+         back_brush  = Brush_PaleBlue;
+      } break;
+
+      case Woody_Blue: {
+         front_brush = Brush_PaleBlue;
+         back_brush  = Brush_WoodyBlue;
+      } break;
+
+      case Blue: {
+         front_brush = Brush_PaleBlue;
+         back_brush  = Brush_Blue;
+      } break;
+
+      default: {
+         return;
+      } break;
+      }
+   } else {
+      switch (brick_type)
+      {
+      case Pale_Blue: {
+         front_brush = Brush_PaleBlue;
+         back_brush  = Brush_WoodyBlue;
+      } break;
+
+      case Woody_Blue: {
+         front_brush = Brush_WoodyBlue;
+         back_brush  = Brush_PaleBlue;
+      } break;
+
+      case Blue: {
+         front_brush = Brush_Blue;
+         back_brush  = Brush_PaleBlue;
+      } break;
+
+      default: {
+         return;
+      } break;
+      }
+   }
+
+}
+//---------------------------------------------------------------------------------------------------
+void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, EBrickType brick_type, ELetterType letter_type, int rotation_step)
 {  /* The function drawning animation on fall brick : */
 
 	double offset;
-	double rotation_angle = 2.0 * M_PI / 16.0 * (double)rotation_step;  /* Converting a step to a rotation angle */
+   double rotation_angle;
 	int brick_half_height = GRAPHIC_BRICK_HEIGHT * GRAPHIC_GLOBAL_SCALE / 2;
 	int back_part_offset;
+   HBRUSH front_brush, back_brush;
 	XFORM xform, old_xform;
+
+   /* Adjusting the rotation pitch and rotation angle */
+   rotation_step = rotation_step % 16;
+
+   /* Converting a step to a rotation angle */
+   if (rotation_step < 8)
+      rotation_angle = 2.0 * M_PI / 16.0 * (double)rotation_step;
+   else
+      rotation_angle = 2.0 * M_PI / 16.0 * (double)(8L - (long long)rotation_step);
+
+   /* Edge case processing */
+   if (!(brick_type == Pale_Blue || brick_type == Blue || brick_type == Woody_Blue)) { return; }
+
+   if (rotation_step > 4 && rotation_step <= 12)
+      SetBrickLetterColor(true, brick_type, front_brush, back_brush);
+   else
+      SetBrickLetterColor(false, brick_type, front_brush, back_brush);
 
 	if (rotation_step == 4 || rotation_step == 12)
 	{
       /* Brick background */
 		SelectObject(hdc, Brick_Pen_White_Outline);
-		SelectObject(hdc, Brush_WoodyBlue);
+		SelectObject(hdc, back_brush);
 
 		Rectangle(hdc, coord_x_pos,
                      coord_y_pos + brick_half_height - GRAPHIC_GLOBAL_SCALE,
@@ -89,7 +164,7 @@ void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, int rotation_ste
 
       /* The front of the brick : */
 		SelectObject(hdc, Brick_Pen_White_Outline);
-		SelectObject(hdc, Brush_PaleBlue);
+		SelectObject(hdc, front_brush);
 
 		Rectangle(hdc, coord_x_pos,
                      coord_y_pos + brick_half_height,
@@ -112,7 +187,7 @@ void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, int rotation_ste
 	
 		/* Brick background */
 		SelectObject(hdc, Brick_Pen_White_Outline);
-		SelectObject(hdc, Brush_WoodyBlue);
+		SelectObject(hdc, back_brush);
 
 		offset = 3.0 * (1.0 - fabs(xform.eM22)) * (double)GRAPHIC_GLOBAL_SCALE;
 		back_part_offset = (int)round(offset);
@@ -122,11 +197,28 @@ void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, int rotation_ste
 
       /* The front of the brick : */
 		SelectObject(hdc, Brick_Pen_White_Outline);
-		SelectObject(hdc, Brush_PaleBlue);
+		SelectObject(hdc, front_brush);
 
 		Rectangle(hdc, 0, -brick_half_height,
                         GRAPHIC_BRICK_WIDTH * GRAPHIC_GLOBAL_SCALE,
                         brick_half_height);
+
+      if (rotation_step > 4 && rotation_step <= 12)
+      {
+         SelectObject(hdc, Letter_Pen_Black);
+
+         switch (letter_type)
+         {
+         case ELT_O: {
+            Ellipse(hdc, 0 + 5 * GRAPHIC_GLOBAL_SCALE,
+                       (-5 * GRAPHIC_GLOBAL_SCALE) / 2,
+                         0 + 10 * GRAPHIC_GLOBAL_SCALE,
+                         5 * GRAPHIC_GLOBAL_SCALE / 2);
+         } break;
+
+         default: break;
+         }
+      }
 
 		SetWorldTransform(hdc, &old_xform);
    }
@@ -176,7 +268,6 @@ void DrawLevel(HDC hdc)
    }
 
    DrawPlatform(hdc, 80, 190);
-
 }
 //---------------------------------------------------------------------------------------------------
 void DrawFrame(HDC hdc)
@@ -184,7 +275,10 @@ void DrawFrame(HDC hdc)
 
    //DrawLevel(hdc);
 
-   for(int i = 0; i < 16; ++i)
-      DrawBrickLetter(hdc, 20 + i * 16 * GRAPHIC_GLOBAL_SCALE, 100, i);
+   for(int i = 0; i < 16; ++i) {
+      DrawBrickLetter(hdc, 20 + i * 16 * GRAPHIC_GLOBAL_SCALE, 100, Woody_Blue, ELT_O, i);
+      DrawBrickLetter(hdc, 20 + i * 16 * GRAPHIC_GLOBAL_SCALE, 130, Pale_Blue, ELT_O, i);
+      DrawBrickLetter(hdc, 20 + i * 16 * GRAPHIC_GLOBAL_SCALE, 160, Blue, ELT_O, i);
+   }
 }
 //---------------------------------------------------------------------------------------------------

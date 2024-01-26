@@ -4,6 +4,7 @@
 #include <cmath>
 #include "Game_Core.hpp"
 
+//----------------------------------------------------------------------------------------------------
 # define M_PI           3.14159265358979323846  /* pi */
 
 //||:-GAME GLOBAL: MULTIPLY FOR SIZE GAME OBJECTS-:||
@@ -20,15 +21,20 @@
 //|||||||||||||:-GAME OBJECT: PLATFORM-:|||||||||||||
 # define GRAPHIC_CIRCLE_SIZE		7
 # define GRAPHIC_INNER_WIDTH		21
-
+//----------------------------------------------------------------------------------------------------
 enum EBrickType;
 
+enum ELetterType;
 //----------------------------------------------------------------------------------------------------
 void Init();
 
 void DrawBrick(HDC hdc, EBrickType color_brick, int x_offset, int y_offset);
 
-void DrawPlatform(HDC hdc, int x, int y);
+void SetBrickLetterColor(bool is_front_side, EBrickType brick_type, HBRUSH &front_brush, HBRUSH &back_brush);
+
+void DrawBrickLetter(HDC hdc, int coord_x_pos, int coord_y_pos, EBrickType brick_type, ELetterType letter_type, int rotation_step);
+
+void DrawPlatform(HDC hdc, int coord_x_pos, int coord_y_pos);
 
 void DrawLevel(HDC hdc);
 
