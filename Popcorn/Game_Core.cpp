@@ -53,7 +53,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
    wcex.hInstance      = hInstance;
    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_POPCORN));
    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-   wcex.hbrBackground  = CreateSolidBrush(RGB(10, 28, 52));    // Name Color: Cobalt;
+   wcex.hbrBackground  = CreateSolidBrush(GRAPHIC_BG_COLOR);    // Name Color: Cobalt;
    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_POPCORN);
    wcex.lpszClassName  = szWindowClass;
    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -64,8 +64,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance;
-
-   Init();
 
    RECT window_rect;
    window_rect.left    = 0;
@@ -80,6 +78,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
                               window_rect.right - window_rect.left,
                               window_rect.bottom - window_rect.top,
                               nullptr, nullptr, hInstance, nullptr   );
+
+   EngineInit(hWnd);
 
    if (hWnd == 0)
       return FALSE;
@@ -116,9 +116,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hWnd, &ps);
 
-      DrawFrame(hdc);
+      DrawFrame(hdc, ps.rcPaint);
 
       EndPaint(hWnd, &ps);
+   } break;
+
+   case WM_KEYDOWN: {
+      switch(wParam)
+      {
+      case VK_LEFT: {
+         return OnKeyDown(EKT_Left);
+      } break;
+         
+      case VK_RIGHT: {
+         return OnKeyDown(EKT_Right);
+      } break;
+
+      case VK_SPACE: {
+         return OnKeyDown(EKT_Space);
+      } break;
+      }
+   } break;
+
+   case WM_TIMER: {
+      if (wParam == WM_USER + 1)
+         return OnTimer();
    } break;
 
    case WM_DESTROY: {
